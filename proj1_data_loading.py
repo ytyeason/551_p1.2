@@ -55,7 +55,7 @@ def getXandY(data):
         x_set.append(item['w_counts'])#add each data set
         y_set.append([item['popularity_score']])
 
-training_set = data[0:1000]
+training_set = data[0:10000]
 validation_set = data[10000:11000]
 testing_set = data[11000:12000]
 
@@ -81,7 +81,7 @@ def w_closed(X,Y):
     w = np.dot(np.linalg.inv(temp1),temp2)
     return w
 
-def w_gradient(X,Y,eta=0.5,beta=300,e=0.001):
+def w_gradient(X,Y,eta=0.5,beta=0.1,e=0.0001):
     dim = np.array(X).shape[1]
     Xarg = np.insert(X,dim,1,axis=1)
     # Xarg = np.c_[X, [1]*1000]
@@ -93,16 +93,15 @@ def w_gradient(X,Y,eta=0.5,beta=300,e=0.001):
     # print(np.dot(Xarg.T, Y))
 
     err = np.ones((dim,1))
+    N = len(Y)
 
     i = 1
     while np.linalg.norm(err,2) > e:
-        alpha = eta / (1 + beta * i)
-        # alpha = 0.01
-        # past = weight.copy()
+        alpha = eta / (1 + beta * i) * N
 
         # print(2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y)))
 
-        weight = weight - 2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y))
+        weight = (weight - 2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y)))
 
         # print(weight)
         err = 2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y))
@@ -116,8 +115,8 @@ def w_gradient(X,Y,eta=0.5,beta=300,e=0.001):
 # print(w_closed(X,Y))
 # print(w_gradient(X,Y))
 print(w_gradient(X2,Y2))
+print("-----------------------------------")
 print(w_closed(X2,Y2))
-# w_gradient(X2,Y2)
 
 
 
