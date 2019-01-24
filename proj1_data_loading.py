@@ -33,7 +33,7 @@ def pre_process(data_set):
 
     #sort the map by key in dscending order
     frequency_map = sorted(frequency_map.items(), key=lambda kv: kv[1], reverse = True)
-    # print(frequency_map[0:160])
+    print(frequency_map[0:160])
     #first get the top 160 item of the map, then get the keys into a list
     most_frequent_word = [i[0] for i in frequency_map[0:160]]
     # print(most_frequent_word)
@@ -44,9 +44,14 @@ def pre_process(data_set):
                 index = most_frequent_word.index(word)
                 x_counts[index] = x_counts[index] + 1.0
         item['w_counts'] = x_counts
+
     return data_set
 
-data = pre_process(data)
+training_set = data[0:10000]
+validation_set = data[10000:11000]
+testing_set = data[11000:12000]
+
+training_set = pre_process(training_set)
 
 x_set = []
 y_set = []
@@ -54,10 +59,6 @@ def getXandY(data):
     for item in data:
         x_set.append(item['w_counts'])#add each data set
         y_set.append([item['popularity_score']])
-
-training_set = data[0:1000]
-validation_set = data[10000:11000]
-testing_set = data[11000:12000]
 
 getXandY(training_set)
 
@@ -77,11 +78,12 @@ def w_closed(X,Y):
     dim = np.array(X).shape[1]
     Xarg = np.insert(X,dim,1,axis=1)
     temp1 = np.dot(Xarg.T,Xarg)
+
     temp2 = np.dot(Xarg.T,Y)
     w = np.dot(np.linalg.inv(temp1),temp2)
     return w
 
-def w_gradient(X,Y,eta=0.5,beta=300,e=0.001):
+def w_gradient(X,Y,eta=0.0000001,beta=0.0005,e=0.001):
     dim = np.array(X).shape[1]
     Xarg = np.insert(X,dim,1,axis=1)
     # Xarg = np.c_[X, [1]*1000]
@@ -92,31 +94,31 @@ def w_gradient(X,Y,eta=0.5,beta=300,e=0.001):
     # print(-2*(np.dot(np.dot(Xarg.T, Xarg), weight) - np.dot(Xarg.T, Y)))
     # print(np.dot(Xarg.T, Y))
 
-    err = np.ones((dim,1))
+    diff = np.ones((dim,1))
 
     i = 1
-    while np.linalg.norm(err,2) > e:
+    while np.linalg.norm(diff,2) > e:
         alpha = eta / (1 + beta * i)
         # alpha = 0.01
         # past = weight.copy()
 
         # print(2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y)))
-
-        weight = weight - 2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y))
-
+        diff = 2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y))
+        weight = weight - diff
+        print(np.linalg.norm(diff,2))
         # print(weight)
-        err = 2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y))
+        # err = 2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y))
         # print(err)
         # print(np.linalg.norm(err,2))
 
         i+=1
-    # print(i)
+    print(i)
     return weight
 
 # print(w_closed(X,Y))
 # print(w_gradient(X,Y))
-print(w_gradient(X2,Y2))
-print(w_closed(X2,Y2))
+# print(w_gradient(X2,Y2))
+# print(w_closed(X2,Y2))
 # w_gradient(X2,Y2)
 
 
