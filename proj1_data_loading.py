@@ -55,7 +55,7 @@ def getXandY(data):
     x_set = []
     y_set = []
     for item in data:
-        x_others = [1]#, np.log(item['children'] + 1), np.power(item['children'],2)] # 2 other features + bias
+        x_others = [1, np.log(item['children'] + 1), item['controversiality']]#, np.power(item['children'],2)] # 2 other features + bias
         x_set.append(x_others + item['w_counts'])  #add each data set
         y_set.append([item['popularity_score']])
     return np.array(x_set), np.array(y_set)
@@ -88,7 +88,7 @@ def w_closed(X,Y):
     return w
 
 # epsilon should be <= 10^-6, eta < 10^-5, beta < 0.001
-def w_gradient(X,Y,eta=10e-07,beta=0.0009,e=10e-5):
+def w_gradient(X,Y,eta=1e-06,beta=1e-05,e=1e-6):
     dim = np.array(X).shape[1]
 #    Xarg = np.insert(X,dim,1,axis=1) # include bias
     # Xarg = np.c_[X, [1]*1000]
@@ -99,7 +99,14 @@ def w_gradient(X,Y,eta=10e-07,beta=0.0009,e=10e-5):
     # print(np.dot(Xarg.T, Y))
 
     diff = np.ones((dim,1))
-
+    
+    # for faster computation
+    xtx = np.dot(X.T, X)
+    xty = np.dot(X.T, Y)
+    
+    # test convergence
+    past_diff = 10
+    
     i = 1
     while np.linalg.norm(diff,2) > e:
         alpha = eta / (1 + beta * i)
@@ -107,15 +114,23 @@ def w_gradient(X,Y,eta=10e-07,beta=0.0009,e=10e-5):
         # past = weight.copy()
 
         # print(2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y)))
-        diff = 2*alpha*(np.dot(np.dot(X.T, X), weight)-np.dot(X.T, Y))
+        diff = 2*alpha*(np.dot(xtx, weight)-xty)
         weight = weight - diff
         #print(np.linalg.norm(diff,2))
         
         # err = 2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y))
 #        print(weight)
 #        print("   ",alpha)
-        print(np.linalg.norm(diff,2))
-
+#        print(np.linalg.norm(diff,2))
+        
+        # test convergence
+        if (i==1):
+            past_diff = np.linalg.norm(diff,2)
+#            print(np.linalg.norm(diff,2))
+        if (i == 2 and past_diff <= np.linalg.norm(diff,2)):
+#            print(np.linalg.norm(diff,2))
+            print("in 2nd if")
+            return np.ones((dim,1))
 #         print(np.linalg.norm(err,2))
 
         i+=1
@@ -124,7 +139,7 @@ def w_gradient(X,Y,eta=10e-07,beta=0.0009,e=10e-5):
 
 def MSE(X,w,y):
     xw = X @ w
-    return (y - xw).T @ (y-xw) / len(y)
+    return ((y - xw).T @ (y-xw) / len(y))[0][0]
 
 #print(w_closed(X,Y))
 #print(w_gradient(X,Y))
@@ -133,19 +148,49 @@ def MSE(X,w,y):
 
 print ("-----------------------------------------------------------------")
 
-#weight_c = w_closed(x_train,y_train)
-#
-#print("weight in closed form is: \n", weight_c)
-#print("MSE for closed form is: \n", MSE(x_train, weight_c, y_train))
+weight_c = w_closed(x_train,y_train)
+
+print("weight in closed form is: \n", weight_c)
+print("training MSE for closed form is: \n", MSE(x_train, weight_c, y_train))
+print("validating MSE for closed form is: \n", MSE(x_valid, weight_c, y_valid))
 
 weight_g = w_gradient(x_train,y_train)
 print("weight gradient is: \n", weight_g)
-print("MSE for gradient is: \n", MSE(x_train, weight_g, y_train))
+print("training MSE for gradient is: \n", MSE(x_train, weight_g, y_train))
+print("validating MSE for gradient is: \n", MSE(x_valid, weight_g, y_valid))
 
 
+'''
+# to test which values to give to hyperparameters
+mse_t_a = []
+mse_v_a = []
+best_mse_train = 1.14
+best_mse_valid = 1.16
 
+eta = [10e-05,10e-06,10e-07]
+beta = [0.001,10e-04,10e-05,10e-06]
+epsilon = [10e-05,10e-06,10e-07]
+for n0 in eta:
+    for b in beta:
+        for e in epsilon:
+            print(n0,b,e)
+            w_g = w_gradient(x_train,y_train,n0,b,e)
+            mse_train = MSE(x_train, w_g, y_train)
+            mse_valid = MSE(x_valid, w_g, y_valid)
+            if (mse_train < best_mse_train):
+                best_mse_train = mse_train
+                mse_t_a.append((n0,b,e,mse_train))
+            if (mse_valid < best_mse_valid):
+                best_mse_valid = mse_valid
+                mse_v_a.append((n0,b,e,mse_valid))
 
+print("best train mse", mse_t_a)
+print("best valid mse", mse_v_a)
 
-
-
+for (n0,b,e,mse) in mse_t_a:
+    for (v_n0,v_b,v_e,v_mse) in mse_v_a:
+        if n0==v_n0 and b==v_b and e==v_e:
+            print(n0,b,e,mse)
+            print(v_n0,v_b,v_e,v_mse)
+'''
 #end
