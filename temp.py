@@ -134,6 +134,10 @@ def w_gradient(X,Y,eta=10e-7,beta=0,e=10e-5):
     return weight
 
 def w_gradient_2(X,Y,eta=10e-5,beta=0,eps=10e-5):
+<<<<<<< HEAD
+    X = np.array(X)
+=======
+>>>>>>> 61f4794818d0ef84260aeb69957491ee70f19eef
     weight = np.random.randn(X.shape[1]) / np.sqrt(X.shape[1])
     n = len(Y)
     i = 1
