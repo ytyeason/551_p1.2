@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import json # we need to use the JSON package to load the data, since the data is stored in JSON format
+from datetime import datetime 
 
 # np.set_printoptions(threshold=np.nan)
 #################################
@@ -25,7 +26,7 @@ def pre_process_text(text,frequency_map):
                 frequency_map[word] = 1
     return precessed_list
 
-def pre_process(data_set):
+def pre_process(data_set, nb_of_top_words=160):
     frequency_map = {}
     #preprocess is_root and text
     for item in data_set:
@@ -39,10 +40,10 @@ def pre_process(data_set):
     frequency_map = sorted(frequency_map.items(), key=lambda kv: kv[1], reverse = True)
     #print(frequency_map[0:160])
     #first get the top 160 item of the map, then get the keys into a list
-    most_frequent_word = [i[0] for i in frequency_map[0:160]]
+    most_frequent_word = [i[0] for i in frequency_map[0:nb_of_top_words]]
     # print(most_frequent_word)
     for item in data_set:
-        x_counts = [0.0]*160
+        x_counts = [0.0]*nb_of_top_words
         for word in item['text']:
             if word in most_frequent_word:
                 index = most_frequent_word.index(word)
@@ -51,30 +52,17 @@ def pre_process(data_set):
 
     return data_set
 
-def getXandY(data):
+def getXandY(data,with_text_feature=1):
     x_set = []
     y_set = []
     for item in data:
-        x_others = [1, np.log(item['children'] + 1), item['controversiality']]#, np.power(item['children'],2)] # 2 other features + bias
-        x_set.append(x_others + item['w_counts'])  #add each data set
+        if (with_text_feature == 1):
+            x_others = [1, np.log(item['children'] + 1), item['controversiality']]#, np.power(item['children'],2)] # 2 other features + bias
+            x_set.append(x_others + item['w_counts'])  #add each data set
+        else:
+            x_set.append([1, item['children'], item['controversiality'], item['is_root']])
         y_set.append([item['popularity_score']])
     return np.array(x_set), np.array(y_set)
-
-# get x and y
-training_set = pre_process(training_set)
-x_train, y_train = getXandY(training_set)
-
-validation_set = pre_process(validation_set)
-x_valid, y_valid = getXandY(validation_set)
-
-# test data --------
-X = np.array([[0.86], [0.09], [-0.85], [0.87], [-0.44], [-0.43],
-              [-1.10], [0.40], [-0.96], [0.17]])
-
-Y = np.array([[2.49], [0.83], [-0.25], [3.10], [0.87], [0.02],
-              [-0.12], [1.81], [-0.83], [0.43]])
-
-# ------------------
 
 # task 2
 def w_closed(X,Y):
@@ -91,50 +79,38 @@ def w_closed(X,Y):
 def w_gradient(X,Y,eta=1e-06,beta=1e-05,e=1e-6):
     dim = np.array(X).shape[1]
 #    Xarg = np.insert(X,dim,1,axis=1) # include bias
-    # Xarg = np.c_[X, [1]*1000]
 
     weight = np.random.random((dim,1))
-#    print(weight)
-    # print(-2*(np.dot(np.dot(Xarg.T, Xarg), weight) - np.dot(Xarg.T, Y)))
-    # print(np.dot(Xarg.T, Y))
-
     diff = np.ones((dim,1))
     
     # for faster computation
     xtx = np.dot(X.T, X)
     xty = np.dot(X.T, Y)
     
-    # test convergence
-    past_diff = 10
+#    # test convergence
+#    past_diff = 10
     
     i = 1
     while np.linalg.norm(diff,2) > e:
         alpha = eta / (1 + beta * i)
-        # alpha = 0.01
-        # past = weight.copy()
 
         # print(2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y)))
         diff = 2*alpha*(np.dot(xtx, weight)-xty)
         weight = weight - diff
         #print(np.linalg.norm(diff,2))
         
-        # err = 2*alpha*(np.dot(np.dot(Xarg.T, Xarg), weight)-np.dot(Xarg.T, Y))
-#        print(weight)
-#        print("   ",alpha)
-#        print(np.linalg.norm(diff,2))
-        
-        # test convergence
-        if (i==1):
-            past_diff = np.linalg.norm(diff,2)
-#            print(np.linalg.norm(diff,2))
-        if (i == 2 and past_diff <= np.linalg.norm(diff,2)):
-#            print(np.linalg.norm(diff,2))
-            print("in 2nd if")
-            return np.ones((dim,1))
-#         print(np.linalg.norm(err,2))
+#        # test convergence
+#        if (i==1):
+#            past_diff = np.linalg.norm(diff,2)
+##            print(np.linalg.norm(diff,2))
+#        if (i == 2 and past_diff <= np.linalg.norm(diff,2)):
+##            print(np.linalg.norm(diff,2))
+#            print("in 2nd if")
+#            return np.ones((dim,1))
+##         print(np.linalg.norm(err,2))
 
         i+=1
-    print(i)
+#    print(i)
     return weight
 
 def MSE(X,w,y):
@@ -146,18 +122,42 @@ def MSE(X,w,y):
 
 # w_gradient(X2,Y2)
 
-print ("-----------------------------------------------------------------")
+#print ("-----------------------------------------------------------------")
+#
+#weight_c = w_closed(x_train,y_train)
+#
+#print("weight in closed form is: \n", weight_c)
+#print("training MSE for closed form is: \n", MSE(x_train, weight_c, y_train))
+#print("validating MSE for closed form is: \n", MSE(x_valid, weight_c, y_valid))
+#
+#weight_g = w_gradient(x_train,y_train)
+#print("weight gradient is: \n", weight_g)
+#print("training MSE for gradient is: \n", MSE(x_train, weight_g, y_train))
+#print("validating MSE for gradient is: \n", MSE(x_valid, weight_g, y_valid))
 
-weight_c = w_closed(x_train,y_train)
+# task 3
+print ("TASK 3 -----------------------------------------------------------------")
+training_set = pre_process(training_set,60)
+validation_set = pre_process(validation_set,60)
 
-print("weight in closed form is: \n", weight_c)
-print("training MSE for closed form is: \n", MSE(x_train, weight_c, y_train))
-print("validating MSE for closed form is: \n", MSE(x_valid, weight_c, y_valid))
+print("Testing with 3 simple features")
+# get x and y
+x_train, y_train = getXandY(training_set,0)
+x_valid, y_valid = getXandY(validation_set,0)
 
-weight_g = w_gradient(x_train,y_train)
-print("weight gradient is: \n", weight_g)
-print("training MSE for gradient is: \n", MSE(x_train, weight_g, y_train))
-print("validating MSE for gradient is: \n", MSE(x_valid, weight_g, y_valid))
+startTime = datetime.now()
+w_closed_train_3Simple = w_closed(x_train,y_train)
+endTime = datetime.now()
+print("Closed form took: ", endTime-startTime, "minutes")
+
+startTime = datetime.now()
+w_gd_train_3Simple = w_gradient(x_train,y_train)
+endTime = datetime.now()
+print("Gradient took: ", endTime-startTime, "minutes")
+
+
+
+
 
 
 '''
