@@ -158,6 +158,8 @@ print ("TASK 3 -------------------------------------------------------------")
 training_set60 = pre_process(training_set,60)
 validation_set60 = pre_process(validation_set,60,False)
 
+frequency_map = {}
+
 # get 160 words
 training_set160 = pre_process(training_set2,160)
 validation_set160 = pre_process(validation_set2,160,False)
@@ -167,14 +169,10 @@ fin = open("top_160.txt",'w')
 fin.write(str(sorted(frequency_map.items(), key=lambda kv: kv[1],reverse = True)[0:160]))
 fin.close()
 
-'''
-
 # get x and y with no text features
 x_train, y_train = getXandY(training_set60,0,0)
 x_valid, y_valid = getXandY(validation_set60,0,0)
-'''
 
-'''
 
 # get x and y with 60 text features only
 x_train60, y_train60 = getXandY(training_set60,1,0)
@@ -304,4 +302,3 @@ x_test162, y_test162 = getXandY(testing_set160,1,1)
 
 print("the weight is: \n", w_closed_162)
 print("MSE test: ", MSE(x_test162, w_closed_162, y_test162))
-'''
