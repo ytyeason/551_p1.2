@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import json # we need to use the JSON package to load the data, since the data is stored in JSON format
-from datetime import datetime 
+from datetime import datetime
 
 # np.set_printoptions(threshold=np.nan)
 #################################
@@ -16,34 +16,35 @@ with open("proj1_data.json") as fp:
     data2 = json.load(fp)
 fp.close()
 
-def pre_process_text(text,frequency_map):
-    precessed_list = text.lower().split()
+frequency_map = {}
 
-    for word in precessed_list:
-            if word in frequency_map:
-                frequency_map[word] = frequency_map[word] + 1
-            else:
-                frequency_map[word] = 1
-    return precessed_list
+def build_freq_map(data_set):
+    for item in data_set:
+        for word in item['text']:
+                if word in frequency_map:
+                    frequency_map[word] = frequency_map[word] + 1
+                else:
+                    frequency_map[word] = 1
 
-def pre_process(data_set, nb_of_top_words=160):
-    frequency_map = {}
+def pre_process(data_set, nb_of_top_words=160, build=True):
     #preprocess is_root and text
     for item in data_set:
         if item['is_root'] == True:
             item['is_root'] = 1
         else:
             item['is_root'] = 0
-        item['text'] = pre_process_text(item['text'],frequency_map)
+        item['text'] = item['text'].lower().split()
+
+    if build:
+        build_freq_map(data_set)
 
     #sort the map by key in dscending order
-    frequency_map = sorted(frequency_map.items(), key=lambda kv: kv[1], reverse = True)
+    frequency_map_sorted = sorted(frequency_map.items(), key=lambda kv: kv[1], reverse = True)
     #print(frequency_map[0:160])
     #first get the top 160 item of the map, then get the keys into a list
-    most_frequent_word = [i[0] for i in frequency_map[0:nb_of_top_words]]
-    
-#    print(most_frequent_word)
-    
+    most_frequent_word = [i[0] for i in frequency_map_sorted[0:nb_of_top_words]]
+
+
     for item in data_set:
         x_counts = [0.0]*nb_of_top_words
         for word in item['text']:
@@ -66,19 +67,19 @@ def getXandY(data, with_text_feature=1, with_extra_features=0):
             x_set.append(x_others + item['w_counts'])  #add each data set
         elif (with_text_feature == 0 and with_extra_features == 0): # only 3 simple features
             x_set.append([1, item['children'], item['controversiality'], item['is_root']])
-            
+
         y_set.append([item['popularity_score']])
-        
+
     return np.array(x_set), np.array(y_set)
 
 # task 2
 def w_closed(X,Y):
 #    dim = np.array(X).shape[1]
 #    Xarg = np.insert(X,dim,1,axis=1) # add bias
-    
+
     temp1 = np.dot(X.T,X)
     temp2 = np.dot(X.T,Y)
-    
+
     w = np.dot(np.linalg.inv(temp1),temp2)
     return w
 
@@ -89,14 +90,14 @@ def w_gradient(X,Y,eta=1e-06,beta=0.0001,e=1e-6):
 
     weight = np.random.random((dim,1))
     diff = np.ones((dim,1))
-    
+
     # for faster computation
     xtx = np.dot(X.T, X)
     xty = np.dot(X.T, Y)
-    
+
     # test convergence
     past_diff = 10
-    
+
     i = 1
     while np.linalg.norm(diff,2) > e:
         alpha = eta / (1 + beta * i)
@@ -105,7 +106,7 @@ def w_gradient(X,Y,eta=1e-06,beta=0.0001,e=1e-6):
         diff = 2*alpha*(np.dot(xtx, weight)-xty)
         weight = weight - diff
         #print(np.linalg.norm(diff,2))
-        
+
         # test convergence
         if (i==1):
             past_diff = np.linalg.norm(diff,2)
@@ -155,16 +156,25 @@ testing_set2 = data2[11000:12000]
 print ("TASK 3 -------------------------------------------------------------")
 # get 60 words training set
 training_set60 = pre_process(training_set,60)
-validation_set60 = pre_process(validation_set,60)
+validation_set60 = pre_process(validation_set,60,False)
 
 # get 160 words
 training_set160 = pre_process(training_set2,160)
-validation_set160 = pre_process(validation_set2,160)
-testing_set160 = pre_process(testing_set2,160)
+validation_set160 = pre_process(validation_set2,160,False)
+testing_set160 = pre_process(testing_set2,160,False)
+
+fin = open("top_160.txt",'w')
+fin.write(str(sorted(frequency_map.items(), key=lambda kv: kv[1],reverse = True)[0:160]))
+fin.close()
+
+'''
 
 # get x and y with no text features
 x_train, y_train = getXandY(training_set60,0,0)
 x_valid, y_valid = getXandY(validation_set60,0,0)
+'''
+
+'''
 
 # get x and y with 60 text features only
 x_train60, y_train60 = getXandY(training_set60,1,0)
@@ -294,3 +304,4 @@ x_test162, y_test162 = getXandY(testing_set160,1,1)
 
 print("the weight is: \n", w_closed_162)
 print("MSE test: ", MSE(x_test162, w_closed_162, y_test162))
+'''
