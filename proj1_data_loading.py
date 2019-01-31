@@ -136,9 +136,11 @@ training_set2 = data2[0:10000]
 validation_set2 = data2[10000:11000]
 testing_set2 = data2[11000:12000]
 
+'''
 print(testing_set)
 print("------------------------------------------------")
 print(testing_set2)
+'''
 
 #print ("-----------------------------------------------------------------")
 #training_set = pre_process(training_set)
@@ -204,8 +206,8 @@ w_gd_162 = w_gradient(x_train162,y_train162)
 plt.title('Decay of Error in Gradient Descent per Interation')
 plt.plot(err_decay[0:1000], 'g^')
 plt.show()
-
-
+'''
+'''
 print("********** Testing with 3 simple features **********")
 startTime = datetime.now()
 w_closed_3Simple = w_closed(x_train,y_train)
@@ -219,7 +221,7 @@ print()
 
 # gradient using different learning rates
 eta = [10e-05,10e-06,10e-07]
-beta = [0.001,10e-04,10e-05,10e-06]
+beta = [0.001,1e-04,1e-05,1e-06]
 
 for n0 in eta:
     for b in beta:
@@ -232,16 +234,18 @@ for n0 in eta:
         print("   MSE valid: ", MSE(x_valid, w_gd_3Simple, y_valid))
 
 print()
-
+'''
 print('********** test which values to give to hyperparameters with 162 features **********')
 mse_t_a = []
 mse_v_a = []
 best_mse_train = 1.14
 best_mse_valid = 1.16
 
-eta = [10e-05,10e-06,10e-07]
-beta = [0.001,10e-04,10e-05,10e-06]
-epsilon = [10e-05,10e-06,10e-07]
+# epsilon should be <= 10^-6, eta < 10^-5, beta < 0.001
+
+eta = [1e-05,1e-06,1e-07,1e-08]
+beta = [0.001,1e-04,1e-05,1e-06,1e-07]
+epsilon = [1e-05,1e-06]
 for n0 in eta:
     for b in beta:
         for e in epsilon:
@@ -249,6 +253,9 @@ for n0 in eta:
             w_g = w_gradient(x_train162,y_train162,n0,b,e)
             mse_train = MSE(x_train162, w_g, y_train162)
             mse_valid = MSE(x_valid162, w_g, y_valid162)
+            if (eta == 1e-08):
+                print(mse_train)
+                print(mse_valid)
             if (mse_train < best_mse_train):
                 best_mse_train = mse_train
                 mse_t_a.append((n0,b,e,mse_train))
@@ -256,10 +263,16 @@ for n0 in eta:
                 best_mse_valid = mse_valid
                 mse_v_a.append((n0,b,e,mse_valid))
 
-print("best 2 train mse", mse_t_a[-1], mse_t_a[-2])
-print("best 2 valid mse", mse_v_a[-1], mse_t_a[-2])
-'''
+print(mse_t_a)
+print(mse_v_a)
+
+#
+#print("best 2 train mse", mse_t_a[-1], mse_t_a[-2])
+#print("best 2 valid mse", mse_v_a[-1], mse_t_a[-2])
+
 print()
+
+'''
 
 print('********** Compare 3 models using closed-form **********')
 print('model with only 3 simple features and no text features: ')
@@ -316,7 +329,7 @@ print("   runtime: ", endTime-startTime, "minutes")
 print("   MSE train:", MSE(x_train62, w_closed_top62, y_train62))
 print("   MSE valid: ", MSE(x_valid62, w_closed_top62, y_valid62))
 
-'''
+
 print("top-160 words + 2 features gradient descent: ")
 startTime = datetime.now()
 w_gd_162 = w_gradient(x_train162,y_train162)
