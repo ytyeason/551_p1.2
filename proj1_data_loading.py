@@ -136,6 +136,10 @@ training_set2 = data2[0:10000]
 validation_set2 = data2[10000:11000]
 testing_set2 = data2[11000:12000]
 
+print(testing_set)
+print("------------------------------------------------")
+print(testing_set2)
+
 #print ("-----------------------------------------------------------------")
 #training_set = pre_process(training_set)
 #validation_set = pre_process(validation_set)
