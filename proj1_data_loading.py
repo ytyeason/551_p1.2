@@ -60,10 +60,10 @@ def getXandY(data, with_text_feature=1, with_extra_features=0):
     y_set = []
     for item in data:
         if (with_text_feature == 1 and with_extra_features == 1):
-            x_others = [1, np.log(item['children'] + 1), item['controversiality']] # 2 other features + bias
+            x_others = [1, np.log(item['children'] + 1),item['children'],np.power(item['children'],2), item['controversiality'], item['is_root']] # 2 other features + bias
             x_set.append(x_others + item['w_counts'])  #add each data set
         elif (with_text_feature == 1 and with_extra_features == 0): # only text feature
-            x_others = [1] # bias
+            x_others = [1,item['children'], item['controversiality'], item['is_root']] # bias
             x_set.append(x_others + item['w_counts'])  #add each data set
         elif (with_text_feature == 0 and with_extra_features == 0): # only 3 simple features
             x_set.append([1, item['children'], item['controversiality'], item['is_root']])
@@ -83,6 +83,7 @@ def w_closed(X,Y):
     w = np.dot(np.linalg.inv(temp1),temp2)
     return w
 
+err_decay = []
 # epsilon should be <= 10^-6, eta < 10^-5, beta < 0.001
 def w_gradient(X,Y,eta=1e-06,beta=0.0001,e=1e-6):
     dim = np.array(X).shape[1]
@@ -116,8 +117,8 @@ def w_gradient(X,Y,eta=1e-06,beta=0.0001,e=1e-6):
             print("   DO NOT CONVERGE")
             return np.ones((dim,1))
 #         print(np.linalg.norm(err,2))
-
-        i+=1
+        err_decay.append(np.linalg.norm(diff,2))
+        i = i + 1
     print("   ", i," iterations")
     return weight
 
@@ -173,10 +174,17 @@ fin.close()
 x_train, y_train = getXandY(training_set60,0,0)
 x_valid, y_valid = getXandY(validation_set60,0,0)
 
+print(x_train)
+print(y_train)
+
 
 # get x and y with 60 text features only
 x_train60, y_train60 = getXandY(training_set60,1,0)
 x_valid60, y_valid60 = getXandY(validation_set60,1,0)
+
+# get x and y with 60 text features only + 2 extra features
+x_train62, y_train62 = getXandY(training_set60,1,1)
+x_valid62, y_valid62 = getXandY(validation_set60,1,1)
 
 # get x and y with 160 text features
 x_train160, y_train160 = getXandY(training_set160,1,0)
@@ -185,6 +193,14 @@ x_valid160, y_valid160 = getXandY(validation_set160,1,0)
 # get x and y with 160 text features + 2 extra features
 x_train162, y_train162 = getXandY(training_set160,1,1)
 x_valid162, y_valid162 = getXandY(validation_set160,1,1)
+
+'''
+print("********** decay of error ***********")
+w_gd_162 = w_gradient(x_train162,y_train162)
+plt.title('Decay of Error in Gradient Descent per Interation')
+plt.plot(err_decay[0:1000], 'g^')
+plt.show()
+
 
 print("********** Testing with 3 simple features **********")
 startTime = datetime.now()
@@ -238,7 +254,7 @@ for n0 in eta:
 
 print("best 2 train mse", mse_t_a[-1], mse_t_a[-2])
 print("best 2 valid mse", mse_v_a[-1], mse_t_a[-2])
-
+'''
 print()
 
 print('********** Compare 3 models using closed-form **********')
@@ -287,6 +303,16 @@ print("   MSE valid: ", MSE(x_valid162, w_closed_162, y_valid162))
 
 print()
 
+print('top-60 words + 2 features closed form: ')
+startTime = datetime.now()
+w_closed_top62 = w_closed(x_train62,y_train62)
+endTime = datetime.now()
+print("top-60 words closed form: ")
+print("   runtime: ", endTime-startTime, "minutes")
+print("   MSE train:", MSE(x_train62, w_closed_top62, y_train62))
+print("   MSE valid: ", MSE(x_valid62, w_closed_top62, y_valid62))
+
+'''
 print("top-160 words + 2 features gradient descent: ")
 startTime = datetime.now()
 w_gd_162 = w_gradient(x_train162,y_train162)
@@ -296,9 +322,11 @@ print("   MSE train:", MSE(x_train162, w_gd_162, y_train162))
 print("   MSE valid: ", MSE(x_valid162, w_gd_162, y_valid162))
 
 print()
-
+'''
+'''
 print("********** run 162 features' model on test set **********")
 x_test162, y_test162 = getXandY(testing_set160,1,1)
 
 print("the weight is: \n", w_closed_162)
 print("MSE test: ", MSE(x_test162, w_closed_162, y_test162))
+'''
