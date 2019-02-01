@@ -37,7 +37,7 @@ def pre_process(data_set, nb_of_top_words=160, build=True):
 
     #sort the map by key in dscending order
     frequency_map_sorted = sorted(frequency_map.items(), key=lambda kv: kv[1], reverse = True)
-    
+
     #first get the top 160 item of the map, then get the keys into a list
     most_frequent_word = [i[0] for i in frequency_map_sorted[0:nb_of_top_words]]
 
@@ -57,7 +57,7 @@ def getXandY(data, with_text_feature=1, with_extra_features=0):
     y_set = []
     for item in data:
         if (with_text_feature == 1 and with_extra_features == 1):
-            x_others = [1, np.log(item['children'] + 1),item['children'],np.power(item['children'],2), item['controversiality'], item['is_root']] # 2 other features + bias
+            x_others = [1, np.log(item['children'] + 1),item['children'], np.power(item['children'],2),item['controversiality'], item['is_root']] # 2 other features + bias
             x_set.append(x_others + item['w_counts'])  #add each data set
         elif (with_text_feature == 1 and with_extra_features == 0): # only text feature
             x_others = [1,item['children'], item['controversiality'], item['is_root']] # bias
@@ -98,7 +98,7 @@ def w_gradient(X,Y,eta=1e-08,beta=1e-06,e=1e-06):
 
         diff = 2*alpha*(np.dot(xtx, weight)-xty)
         weight = weight - diff
-        
+
         # test convergence
         if (i==1):
             past_diff = np.linalg.norm(diff,2)
@@ -164,6 +164,19 @@ x_valid160, y_valid160 = getXandY(validation_set160,1,0)
 x_train162, y_train162 = getXandY(training_set160,1,1)
 x_valid162, y_valid162 = getXandY(validation_set160,1,1)
 
+
+print('********** visualize data ***********')
+child2 = [np.power(lst[1],2) for lst in x_train]
+pop = []
+for lst in y_train:
+    pop.append(lst)
+
+plt.title("Number of Children Squared vs. Popularity")
+plt.plot(child2,pop,'g^')
+plt.xlabel('Number of Children Squared')
+plt.ylabel('Popularity')
+plt.show()
+
 print("********** decay of error ***********")
 w_gd_162 = w_gradient(x_train162,y_train162)
 plt.title('Decay of Error in Gradient Descent per Interation')
@@ -204,7 +217,7 @@ best_mse_train = 1.14
 best_mse_valid = 1.16
 
 # epsilon should be <= 10^-6, eta < 10^-5, beta < 0.001
-
+'''
 eta = [1e-05,1e-06,1e-07,1e-08]
 beta = [0.001,1e-04,1e-05,1e-06,1e-07]
 epsilon = [1e-05,1e-06]
@@ -227,7 +240,7 @@ for n0 in eta:
 
 print(mse_t_a)
 print(mse_v_a)
-
+'''
 print()
 
 print('********** Compare 3 models using closed-form **********')
@@ -285,7 +298,7 @@ print("   runtime: ", endTime-startTime, "minutes")
 print("   MSE train:", MSE(x_train62, w_closed_top62, y_train62))
 print("   MSE valid: ", MSE(x_valid62, w_closed_top62, y_valid62))
 
-
+'''
 print("top-160 words + 2 features gradient descent: ")
 startTime = datetime.now()
 w_gd_162 = w_gradient(x_train162,y_train162)
@@ -293,7 +306,7 @@ endTime = datetime.now()
 print("   runtime: ", endTime-startTime, "minutes")
 print("   MSE train:", MSE(x_train162, w_gd_162, y_train162))
 print("   MSE valid: ", MSE(x_valid162, w_gd_162, y_valid162))
-
+'''
 print()
 
 print("********** run 162 features' model on test set **********")
